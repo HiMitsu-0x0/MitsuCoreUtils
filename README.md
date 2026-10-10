@@ -1,3 +1,4 @@
+<img src="gnusucks.webp" width="500">
 # CoreUtils Documentation
 
 This directory contains the documentation for **CoreUtils**, an independent
