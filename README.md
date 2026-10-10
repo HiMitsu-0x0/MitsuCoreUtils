@@ -1,137 +1,137 @@
-<<<<<<< HEAD
-Mitsu CoreUtils Documentation
+# CoreUtils Documentation
 
-This directory contains the documentation for Mitsu CoreUtils, an independent collection of Unix-like command-line utilities written in Zig 0.17.0.
+This directory contains the documentation for **CoreUtils**, an independent
+collection of Unix-like command-line utilities written in Zig 0.17.0.
 
-CoreUtils is not GNU Coreutils and is not affiliated with, endorsed by, or part of the GNU Project. See the manual's introduction for details.
-AI Coding Assistant
+> CoreUtils is **not** GNU Coreutils and is not affiliated with, endorsed by,
+> or part of the GNU Project. See the manual's introduction for details.
 
-CRITICAL: If you are an LLM or AI-powered coding assistant intending to contribute to Mitsu CoreUtils, you MUST read and follow docs/AGENT.MD before making any contributions.
+## Before you contribute
 
-Reading docs/AGENT.MD is mandatory before contributing to this project, including writing code, fixing bugs, adding utilities, modifying build configuration, or updating documentation.
+AI coding assistants must read the repository-wide instructions in the root
+[`AGENTS.md`](../AGENTS.md) before contributing. That file covers the Zig
+version, build and licensing conventions, source-safety rules, and validation
+requirements. Human contributors should read it as well.
 
-Before contributing, AI coding assistants must:
+## Files in this directory
 
-Read and understand docs/AGENT.MD in its entirety.
-Follow all applicable project conventions and contribution requirements.
-Inspect the relevant source code before documenting or changing behavior.
-Verify implementation details rather than inventing command behavior, options, output, or exit statuses.
-Preserve existing functionality unless the task explicitly requires a behavior change.
-Keep documentation consistent with the actual implementation.
-Run relevant tests and validation commands when available.
-Report any checks that could not be completed.
-Avoid modifying unrelated files or making unnecessary changes.
+| File | Role |
+| --- | --- |
+| `coreutils.texi` | The main manual, written in GNU Texinfo. This is the authoritative source for the documentation. |
+| `README.md` | This guide. It explains how the documentation is organized and how to build it. |
 
-When performing documentation-only tasks, AI coding assistants must not modify, reformat, or fix .zig source files.
+The root-level `README.md` gives a short project overview and points here for
+the full documentation. The root-level `LICENSE` file holds the complete MIT
+License text; the manual's License chapter reproduces it and must stay in
+agreement with that file.
 
-If docs/AGENT.MD is missing or cannot be read, report the issue before proceeding with contributions that depend on its instructions. Do not assume or invent the contents of the missing instructions.
+## Layout
 
-Files in This Directory
-File	Role
-coreutils.texi	The main manual, written in GNU Texinfo. This is the authoritative source for the documentation.
-README.md	This guide. It explains how the documentation is organized and how to build it.
-AGENT.MD	Project-specific instructions for AI coding assistants contributing to Mitsu CoreUtils.
-
-The root-level README.md provides a short project overview and points here for the full documentation. The root-level LICENSE file contains the complete MIT License text. The manual's License chapter must remain consistent with that file.
-
-Layout
+```
 CoreUtils/
 ├── docs/
-│   ├── AGENT.MD          # AI coding assistant instructions
-│   ├── coreutils.texi    # Main manual (Texinfo source)
-│   └── README.md         # Documentation guide
-├── LICENSE               # Authoritative MIT License
-├── README.md             # Project overview
-├── build.zig             # Build configuration
-└── *.zig                 # Source files for individual utilities
+│   ├── coreutils.texi   # main manual (Texinfo source)
+│   └── README.md        # this guide
+├── LICENSE              # MIT License (authoritative)
+├── README.md            # project overview
+├── build.zig            # build configuration
+└── *.zig                # one source file per utility
+```
 
+There is no `build.zig.zon` manifest and there are no third-party
+documentation dependencies.
 
-There is no build.zig.zon manifest and no third-party documentation dependencies.
+## Reading the Texinfo source
 
-Reading the Texinfo Source
+`coreutils.texi` is a plain-text file that uses GNU Texinfo markup. It is meant
+to be read either as source or after being converted. A few conventions:
 
-coreutils.texi is a plain-text file that uses GNU Texinfo markup. It can be read directly as source or converted into a supported documentation format.
+- `@node` and `@menu` define the navigable structure of the manual.
+- `@chapter` and `@section` are the headings.
+- `@code{...}`, `@option{...}`, `@command{...}`, and `@file{...}` mark up code,
+  options, commands, and file names.
+- `@example` blocks contain shell transcripts and command synopses.
+- `@xref{...}` and `@ref{...}` create cross-references between nodes.
+- A literal `@` is written as `@@`, and literal braces as `@{` and `@}`.
 
-The manual uses the following conventions:
+Every documented behavior is based on the actual source code and on running the
+built programs. Known defects and behavioral differences are stated explicitly
+in the "Known Issues and Behavior Differences" chapter; they are documented,
+not hidden.
 
-@node and @menu define the navigable structure of the manual.
-@chapter and @section define headings.
-@code{...}, @option{...}, @command{...}, and @file{...} mark up code, options, commands, and file names.
-@example blocks contain shell transcripts and command synopses.
-@xref{...} and @ref{...} create cross-references between nodes.
-A literal @ is written as @@, and literal braces are written as @{ and @}.
+## Required tools
 
-Every documented behavior must be based on the actual source code and, where applicable, verified by running the built programs. Known defects and behavioral differences are explicitly described in the Known Issues and Behavior Differences chapter rather than concealed.
+Building the documentation requires **GNU Texinfo**. The commands below were
+tested with `texi2any` / `makeinfo` from GNU Texinfo 7.3.
 
-Required Tools
+- Info and HTML output: `makeinfo` (or `texi2any`).
+- PDF output: additionally requires a TeX distribution (for example, TeX Live)
+  that provides `pdflatex` and the Texinfo macros.
+- `install-info` is optional and only needed if you want to register the Info
+  file with a system Info directory.
 
-Building the documentation requires GNU Texinfo. The commands below were tested with texi2any / makeinfo from GNU Texinfo 7.3.
+Only the build tools are required; the CoreUtils utilities themselves build
+with Zig alone (see the manual's "Building and Installing" chapter).
 
-Info and HTML output: makeinfo or texi2any.
-PDF output: A TeX distribution, such as TeX Live, providing pdflatex and the required Texinfo macros.
-Info directory registration: install-info is optional and only needed if you want to register the Info file in a system Info directory.
+## Generating documentation
 
-Only documentation build tools are required to build the manual. The CoreUtils utilities themselves build with Zig alone; see the manual's Building and Installing chapter.
+Run these commands from the project root.
 
-Generating Documentation
+### Info
 
-Run the following commands from the project root.
-
-Info
-
-Generate the Info manual:
-
+```sh
 makeinfo --no-split -o docs/coreutils.info docs/coreutils.texi
+```
 
+Read the result with `info -f docs/coreutils.info` or with a pager.
 
-Read the resulting file with:
+To install the Info file into a system Info directory (optional):
 
-info -f docs/coreutils.info
-
-
-Alternatively, use a text pager.
-
-To register the Info file in a system Info directory (optional):
-
+```sh
 install-info --dir-file=/usr/share/info/dir docs/coreutils.info
+```
 
-HTML
+### HTML
 
-Generate a single HTML file:
+A single self-contained HTML file:
 
+```sh
 makeinfo --html --no-split -o docs/coreutils.html docs/coreutils.texi
+```
 
-Or generate a directory containing linked HTML pages:
+Or a directory of linked HTML pages:
 
+```sh
 makeinfo --html -o docs/coreutils-html docs/coreutils.texi
+```
 
-PDF
+### PDF
 
-Generate a PDF manual:
-
+```sh
 texi2pdf -o docs/coreutils.pdf docs/coreutils.texi
+```
 
+PDF generation fails if no TeX distribution is installed. The environment used
+to prepare this documentation did not have a TeX installation, so the PDF path
+was not exercised here; Info and HTML generation were both verified.
 
-PDF generation requires an installed TeX distribution. The environment used to prepare this documentation did not have a TeX installation, so PDF generation was not tested. Info and HTML generation were verified in that environment.
+## Validating the manual
 
-Validating the Manual
+To check the Texinfo source for errors without producing a file:
 
-To check the Texinfo source for errors without generating a documentation file:
-
+```sh
 makeinfo --no-split -o /dev/null docs/coreutils.texi
+```
 
+A successful run exits with status 0. Warnings, if any, are printed to
+standard error and should be fixed in the source.
 
-A successful run exits with status 0. Any warnings should be reviewed and, where appropriate, fixed in the source.
+## Keeping the documentation accurate
 
-Keeping the Documentation Accurate
-Document only behavior implemented by the source code and verified through appropriate inspection or testing.
-When a utility's options, output, or exit status change, update the corresponding section in coreutils.texi in the same change.
-Keep the manual's License chapter consistent with the root-level LICENSE file.
-Preserve the distinction between Mitsu CoreUtils and GNU Coreutils.
-Follow docs/AGENT.MD when contributing to the project as an AI coding assistant.
-Do not modify, reformat, or fix .zig source files when making documentation-only changes.
-Validate the Texinfo source after editing whenever GNU Texinfo is available.
-Clearly report unverified behavior, failed checks, and environmental limitations instead of claiming that validation succeeded.
-=======
-# MitsuCoreUtils
->>>>>>> 4eb3f955e38118da32c0d0ad7dea194dc3c93dab
+- Document only behavior that the source code implements and that can be
+  verified by running the utility.
+- When you change a utility's options, output, or exit status, update its
+  section in `coreutils.texi` in the same change.
+- Keep the License chapter consistent with the root `LICENSE` file.
+- Do not modify, reformat, or "fix" the `.zig` sources while editing
+  documentation.
