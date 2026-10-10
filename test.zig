@@ -5,7 +5,6 @@ const Timespec = extern struct {
     nsec: i64,
 };
 
-// Linux x86_64 struct stat. Same layout used in stat.zig and chmod.zig.
 const Stat = extern struct {
     dev: u64,
     ino: u64,
@@ -73,7 +72,6 @@ pub fn main(init: std.process.Init) !u8 {
     const alloc = init.arena.allocator();
     const args = try init.minimal.args.toSlice(alloc);
 
-    // Bracket form: [ EXPRESSION ]
     const start: usize = 1;
     var end: usize = args.len;
     if (std.mem.eql(u8, args[0], "[")) {
@@ -167,7 +165,6 @@ const Parser = struct {
         const a = self.next() orelse return error.MissingOperand;
         const at_end = self.pos >= self.args.len;
 
-        // Unary operators only apply if there is a following argument.
         if (!at_end and a.len == 2 and a[0] == '-') {
             switch (a[1]) {
                 'e' => return self.fileCheck(.exists),
@@ -194,18 +191,15 @@ const Parser = struct {
             }
         }
 
-        // Binary operator: `a` is LHS, look ahead at next token.
         if (self.peek()) |op| {
             if (isBinaryOp(op)) {
                 if (self.pos + 1 >= self.args.len) return error.MissingOperand;
                 const rhs = self.args[self.pos + 1];
-                _ = self.next(); // consume op
-                _ = self.next(); // consume rhs
+                _ = self.next();
+                _ = self.next();
                 return evalBinary(a, op, rhs);
             }
         }
-
-        // Single argument: non-empty string is truthy.
         return a.len > 0;
     }
 
@@ -230,13 +224,11 @@ const Parser = struct {
         const z = try self.alloc.allocSentinel(u8, path.len, 0);
         @memcpy(z, path);
 
-        // Permission checks go through access(2) so effective UID/GID apply.
         if (kind == .readable) return access(z, R_OK) == 0;
         if (kind == .writable) return access(z, W_OK) == 0;
         if (kind == .executable) return access(z, X_OK) == 0;
 
         var st: Stat = undefined;
-        // Symlink check must not follow. Everything else follows, matching GNU.
         const rc = if (kind == .symlink) lstat(z, &st) else stat(z, &st);
         if (rc != 0) return false;
 
