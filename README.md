@@ -1,5 +1,8 @@
-<img src="gnusucks.webp" width="500">
 # CoreUtils Documentation
+
+<p align="center">
+  <img src="gnusucks.webp" width="500">
+</p>
 
 This directory contains the documentation for **CoreUtils**, an independent
 collection of Unix-like command-line utilities written in Zig 0.17.0.
