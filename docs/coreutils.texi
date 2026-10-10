@@ -1,0 +1,2152 @@
+\input texinfo
+@c -*-texinfo-*-
+@c %**start of header
+@setfilename coreutils.info
+@settitle CoreUtils Manual
+@documentencoding UTF-8
+@c %**end of header
+
+@c ---------------------------------------------------------------------
+@c CoreUtils is an independent project.  It is NOT GNU Coreutils and is
+@c not affiliated with, endorsed by, or part of the GNU Project.
+@c ---------------------------------------------------------------------
+
+@dircategory Utilities
+@direntry
+* CoreUtils: (coreutils). Independent Unix-like command-line utilities written in Zig.
+@end direntry
+
+@copying
+Copyright @copyright{} 2026 HiMitsu
+@email{himitsutha@@protonmail.com}
+
+@quotation
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the ``Software''), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ``AS IS'', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+@end quotation
+
+The full license text is also available in the @file{LICENSE} file in the
+project root.
+@end copying
+
+@titlepage
+@title CoreUtils
+@subtitle An Independent Collection of Unix-like Command-Line Utilities
+@subtitle Written in Zig 0.17.0
+@author HiMitsu
+
+@c The following two commands start the copyright page.
+@page
+@vskip 0pt plus 1filll
+Copyright @copyright{} 2026 HiMitsu
+
+@quotation
+CoreUtils is an independent project.  It is not GNU Coreutils, and it is not
+affiliated with, endorsed by, or part of the GNU Project.
+
+CoreUtils is distributed under the MIT License.  The complete license text
+appears in @ref{License} and in the @file{LICENSE} file in the project root.
+@end quotation
+@end titlepage
+
+@contents
+
+@ifnottex
+@node Top
+@top CoreUtils
+
+@code{CoreUtils} is an independent collection of Unix-like command-line
+utilities written in Zig 0.17.0.  It is developed by HiMitsu and distributed
+under the MIT License.
+
+@strong{CoreUtils is not GNU Coreutils.}  It is not affiliated with, endorsed
+by, or part of the GNU Project or the GNU Coreutils package.  It is a separate
+project with its own identity, goals, and design.  It does not claim full
+compatibility with GNU Coreutils or with any POSIX utility specification.
+
+This manual documents every utility that is actually implemented in the
+project, the options that the source code accepts, verified behavior, and the
+known limitations of each program.
+
+@menu
+* Introduction::
+* System Requirements::
+* Building and Installing::
+* Utilities Overview::
+* File Management Utilities::
+* Text Processing Utilities::
+* Shell and Environment Utilities::
+* Development and Contributing::
+* License::
+* Known Issues and Behavior Differences::
+* Index::
+@end menu
+@end ifnottex
+
+@c ---------------------------------------------------------------------
+@node Introduction
+@chapter Introduction
+
+This chapter explains what CoreUtils is, how it relates (and does not relate)
+to GNU Coreutils, and the principles that guide the project.
+
+@menu
+* What CoreUtils Is::
+* Independence from GNU Coreutils::
+* Design Philosophy::
+* Scope and Completeness::
+* Documentation Conventions::
+@end menu
+
+@node What CoreUtils Is
+@section What CoreUtils Is
+
+CoreUtils is a self-contained collection of small command-line programs that
+perform common file, text, and system tasks.  Every program is a separate
+executable built from a single Zig source file.  The tools share a common
+build configuration and a common naming and behavior model, but they are
+otherwise independent programs.
+
+The collection currently provides 40 utilities:
+
+@itemize
+@item
+file and directory operations such as @command{cp}, @command{mv},
+@command{rm}, @command{mkdir}, @command{chmod}, and @command{stat};
+@item
+text processing tools such as @command{head}, @command{tail},
+@command{cut}, @command{uniq}, @command{cmp}, and @command{base64};
+@item
+shell and environment helpers such as @command{echo}, @command{env},
+@command{test}, @command{sleep}, and @command{yes}.
+@end itemize
+
+The project is written in Zig 0.17.0 and links against the C standard library.
+It has no third-party dependencies: it uses only the Zig standard library and
+the platform C library.
+
+@node Independence from GNU Coreutils
+@section Independence from GNU Coreutils
+
+CoreUtils is an independent implementation.  It is @emph{not} GNU Coreutils,
+it is @emph{not} a fork of GNU Coreutils, and it is @emph{not} part of the GNU
+Project.  The project is not affiliated with, sponsored by, or endorsed by the
+Free Software Foundation or the GNU Project.
+
+Some utility names in this manual (for example, @command{cp}, @command{echo},
+@command{test}, or @command{stat}) are names of long-established Unix
+commands.  Using the same name makes the tools convenient in a shell, but it
+does not imply that the behavior is identical to any other implementation.
+Where CoreUtils differs from the traditional behavior of a utility, the
+difference is documented in that utility's section and summarized in
+@ref{Known Issues and Behavior Differences}.
+
+@node Design Philosophy
+@section Design Philosophy
+
+The project is guided by the following principles.
+
+@itemize @bullet
+@item
+@strong{Small and self-contained.}  Each utility is one file with a single
+@code{main} function.  There is no shared runtime library beyond the Zig
+standard library and libc.
+@item
+@strong{Predictable build.}  A single @command{zig build} command produces
+every utility.
+@item
+@strong{Honest scope.}  Utilities implement a focused subset of their
+traditional behavior.  Unsupported options are rejected rather than silently
+ignored (with a small number of documented exceptions).
+@item
+@strong{No false compatibility claims.}  This manual describes what the code
+does, not what a differently named program is expected to do.
+@end itemize
+
+@node Scope and Completeness
+@section Scope and Completeness
+
+CoreUtils does not aim to reproduce all of GNU Coreutils or to be a drop-in
+replacement for the POSIX utilities.  It implements a useful subset and
+documents the boundaries clearly.  In particular:
+
+@itemize
+@item
+Some utilities accept only a subset of the options found in other
+implementations.
+@item
+Some utilities have different output formats (for example, @command{wc} and
+@command{stat}).
+@item
+This release has known defects that affect output and, in one case, cause a
+crash.  They are listed in @ref{Known Issues and Behavior Differences}.
+@end itemize
+
+@node Documentation Conventions
+@section Documentation Conventions
+
+@itemize @bullet
+@item
+Option names are shown as @option{-x} or @option{--long-option}.
+@item
+Placeholders that you replace are written in uppercase, such as
+@var{FILE} or @var{N}.
+@item
+Sample shell sessions are shown in monospaced text.  A leading @samp{$} marks
+the shell prompt; it is not part of the command.
+@item
+Where the current release does @emph{not} behave as the synopsis suggests,
+the actual behavior is stated explicitly in a @strong{Known limitations}
+paragraph and referenced to the list in
+@ref{Known Issues and Behavior Differences}.
+@end itemize
+
+@c ---------------------------------------------------------------------
+@node System Requirements
+@chapter System Requirements
+
+@cindex requirements
+@cindex Zig version
+
+CoreUtils is built and run with the following requirements.
+
+@table @asis
+@item Zig
+Version 0.17.0.  The build uses the standard Zig build system
+(@file{build.zig}) and does not rely on a @file{build.zig.zon} package
+manifest; there are no external Zig dependencies.
+
+@item Operating system
+A Unix-like system.  The project has been built and exercised on Linux
+(x86_64).  Several utilities call POSIX or Linux C library functions and rely
+on the Linux x86_64 layout of @code{struct stat}, so portability to other
+platforms is not claimed and has not been verified.
+
+@item C library
+A C standard library (libc).  Each executable is built with C library linking
+enabled (@code{link_libc = true} in @file{build.zig}) because several
+utilities use libc functions such as @code{getpwuid}, @code{getlogin},
+@code{utimensat}, @code{chmod}, @code{symlink}, @code{link}, @code{access},
+@code{setenv}, @code{execvp}, and @code{strftime}.
+
+@item Tools for the documentation
+Building this manual requires GNU Texinfo (the @command{makeinfo} or
+@command{texi2any} program).  Producing a PDF additionally requires a TeX
+installation.  See @file{docs/README.md} for details.
+@end table
+
+@c ---------------------------------------------------------------------
+@node Building and Installing
+@chapter Building and Installing
+
+@menu
+* Building::
+* Installing::
+* Running the Utilities::
+@end menu
+
+@node Building
+@section Building
+
+From the project root directory, run:
+
+@example
+zig build
+@end example
+
+This compiles every utility listed in the @code{utils} array in
+@file{build.zig} and installs the executables into @file{zig-out/bin/}.  No
+network access and no third-party packages are required.
+
+The optimize mode can be selected with the standard Zig option:
+
+@example
+zig build -Doptimize=ReleaseFast
+@end example
+
+Valid values are @code{Debug}, @code{ReleaseSafe}, @code{ReleaseFast}, and
+@code{ReleaseSmall}.  The build configuration sets @code{ReleaseSmall} as its
+preferred optimize mode, which is used when @option{--release} is passed
+without an explicit @option{-Doptimize}.
+
+A cross target or a custom target can be selected with the standard
+@option{-Dtarget} option, although see @ref{System Requirements} regarding
+supported platforms.
+
+@node Installing
+@section Installing
+
+By default, @command{zig build} installs into the @file{zig-out} directory
+inside the project.  To install into a different prefix, use the standard Zig
+@option{--prefix} option:
+
+@example
+zig build --prefix /usr/local
+@end example
+
+This installs the executables into @file{/usr/local/bin}.  You may need
+elevated privileges to write to system directories.
+
+No shell completions, manual pages, or package-manager integration are
+generated by the build.  This Texinfo manual and the license file are part of
+the source tree; install them manually if you package the project.
+
+@node Running the Utilities
+@section Running the Utilities
+
+After a default build, run a utility from @file{zig-out/bin/}.  For example:
+
+@example
+./zig-out/bin/echo "Hello, world"
+@end example
+
+If you installed into a directory that is on your @env{PATH}, you can invoke
+the utilities by name:
+
+@example
+echo "Hello, world" | ./zig-out/bin/wc /dev/stdin
+@end example
+
+Note that several utilities in this release write their output to standard
+error rather than standard output, and some do not flush standard output at
+all.  Read @ref{Known Issues and Behavior Differences} before relying on
+pipeline output.
+
+@c ---------------------------------------------------------------------
+@node Utilities Overview
+@chapter Utilities Overview
+
+The following table lists every utility that is implemented.  Each entry links
+to a detailed section in the chapters that follow.
+
+@multitable @columnfractions .16 .30 .54
+@headitem Utility @tab Category @tab Summary
+@item @ref{basename} @tab File management @tab Strip directory and suffix from a path.
+@item @ref{catty} @tab File management @tab Print up to the first 4096 bytes of a file.
+@item @ref{chmod} @tab File management @tab Change file mode bits.
+@item @ref{cp} @tab File management @tab Copy files and directories.
+@item @ref{dirname} @tab File management @tab Strip the last path component.
+@item @ref{ll} @tab File management @tab Compact directory listing.
+@item @ref{ln} @tab File management @tab Create hard or symbolic links.
+@item @ref{mkdir} @tab File management @tab Create directories.
+@item @ref{mv} @tab File management @tab Move or rename files and directories.
+@item @ref{pwd} @tab File management @tab Print the current working directory.
+@item @ref{rm} @tab File management @tab Remove files.
+@item @ref{rmdir} @tab File management @tab Remove empty directories.
+@item @ref{stat} @tab File management @tab Display file status.
+@item @ref{sync} @tab File management @tab Flush filesystem buffers.
+@item @ref{tee} @tab File management @tab Copy standard input to standard output and files.
+@item @ref{touch} @tab File management @tab Update timestamps; create empty files.
+@item @ref{truncate} @tab File management @tab Set the size of a file.
+@item @ref{base64} @tab Text processing @tab Base64 encode or decode data.
+@item @ref{cksum} @tab Text processing @tab Compute a checksum, digest, or base64 encoding.
+@item @ref{cmp} @tab Text processing @tab Compare two files byte by byte.
+@item @ref{cut} @tab Text processing @tab Select bytes, characters, or fields from lines.
+@item @ref{head} @tab Text processing @tab Print the first lines of files.
+@item @ref{lsort} @tab Text processing @tab Sort the lines of a file.
+@item @ref{printf} @tab Text processing @tab Format and print arguments.
+@item @ref{seq} @tab Text processing @tab Print a sequence of numbers.
+@item @ref{tail} @tab Text processing @tab Print the last lines of files.
+@item @ref{uniq} @tab Text processing @tab Filter adjacent duplicate lines.
+@item @ref{wc} @tab Text processing @tab Count lines, words, and characters.
+@item @ref{date} @tab Shell and environment @tab Display the current date and time.
+@item @ref{echo} @tab Shell and environment @tab Print the arguments.
+@item @ref{env} @tab Shell and environment @tab Modify the environment and run a command.
+@item @ref{false} @tab Shell and environment @tab Return a failure status.
+@item @ref{logname} @tab Shell and environment @tab Print the login name.
+@item @ref{nproc} @tab Shell and environment @tab Print the number of processors.
+@item @ref{printenv} @tab Shell and environment @tab Print environment variables.
+@item @ref{sleep} @tab Shell and environment @tab Pause for a number of seconds.
+@item @ref{test} @tab Shell and environment @tab Evaluate a conditional expression.
+@item @ref{true} @tab Shell and environment @tab Return a success status.
+@item @ref{whoami} @tab Shell and environment @tab Print the effective user name.
+@item @ref{yes} @tab Shell and environment @tab Repeatedly output a line.
+@end multitable
+
+@c ---------------------------------------------------------------------
+@node File Management Utilities
+@chapter File Management Utilities
+
+These utilities operate on files, directories, links, and path names.
+
+@menu
+* basename::
+* catty::
+* chmod::
+* cp::
+* dirname::
+* ll::
+* ln::
+* mkdir::
+* mv::
+* pwd::
+* rm::
+* rmdir::
+* stat::
+* sync::
+* tee::
+* touch::
+* truncate::
+@end menu
+
+@node basename
+@section basename
+@cindex basename
+
+@command{basename} prints a path name with any leading directory components
+removed, and optionally removes a trailing suffix.
+
+@example
+basename @var{NAME} [@var{SUFFIX}]
+basename @var{OPTION}... @var{NAME}...
+@end example
+
+@table @option
+@item -a
+Treat every operand as a @var{NAME} rather than as a single name plus suffix.
+@item -s @var{SUFFIX}
+Remove a trailing @var{SUFFIX} from each result.
+@item --help
+Print a short help message and exit.
+@item --
+End option processing.
+@end table
+
+Trailing slashes are removed before the last component is selected.  A path
+consisting only of slashes is reduced to @samp{/}; an empty operand is
+replaced by @samp{.}.  A suffix is removed only when the remaining base name
+would be non-empty.
+
+@example
+$ basename /usr/bin/zig
+@end example
+
+@noindent
+The intended output is @samp{zig}.  @strong{Current behavior:} the output
+does not appear, because the standard output writer is never flushed; see
+@ref{Known Issues and Behavior Differences}.
+
+@strong{Known limitations:} the @option{-z}/@option{--zero} option and other
+long options are not implemented; output is written to a buffered standard
+output stream that is not flushed.
+
+@node catty
+@section catty
+@cindex catty
+
+@command{catty} is a minimal file reader.  It opens a single file, reads at
+most 4096 bytes, and prints those bytes followed by a newline.
+
+@example
+catty @var{FILE}
+catty --version
+@end example
+
+@table @option
+@item --version
+Print version information.  Recognized only as the first argument.
+@end table
+
+@command{catty} does not accept multiple files, option flags such as
+@option{-n}, or standard input.  Its output is written to standard error
+because it uses the Zig debugging print routine.
+
+@strong{Known limitations:} only the first 4096 bytes of the file are
+printed; a newline is always appended; there is no @option{--help}; and an
+unreadable or missing file produces an unhandled error trace.  See
+@ref{Known Issues and Behavior Differences}.
+
+@node chmod
+@section chmod
+@cindex chmod
+
+@command{chmod} changes the mode (permission) bits of files.
+
+@example
+chmod [@var{OPTION}]... @var{MODE} @var{FILE}...
+@end example
+
+@table @option
+@item -c, --changes
+Report only files whose mode actually changes.
+@item -f, --silent
+Suppress most error messages.  @option{--quiet} is accepted as a synonym.
+@item -v, --verbose
+Report every file that is processed.
+@item -R, --recursive
+Accepted for compatibility but @strong{not implemented}.  Using it produces
+an error and exit status 1.
+@item --help
+Print a short help message and exit.
+@item --
+End option processing.
+@end table
+
+@var{MODE} may be either an octal number (for example, @samp{755} or
+@samp{0644}) or a symbolic expression.  Symbolic expressions use the letters
+@samp{u}, @samp{g}, @samp{o}, and @samp{a} for the user, group, other, and all
+classes; the operators @samp{+}, @samp{-}, and @samp{=}; and the permission
+letters @samp{r}, @samp{w}, @samp{x}, @samp{X}, @samp{s}, and @samp{t}.
+Permission bits can also be copied between classes with @samp{u}, @samp{g},
+and @samp{o} as the operation argument.  Commas separate multiple clauses.
+
+@example
+$ chmod 644 notes.txt
+$ chmod u+x build.sh
+$ chmod -v go-w report.txt
+mode of 'report.txt' changed to 0644 (-rw-r--r--)
+@end example
+
+@noindent
+Verbose output is written to standard output.
+
+@strong{Exit status:} 0 on success; 1 if the mode is invalid, if an operand
+is missing, or if any file could not be changed.
+
+@strong{Known limitations:} @option{-R} is not implemented; the file-type
+character in the verbose mode string is always @samp{-}; there is no
+@option{--reference} option; symbolic modes operate on the mode reported by
+@code{lstat}, so symlinks themselves are not followed.
+
+@node cp
+@section cp
+@cindex cp
+
+@command{cp} copies a file or a directory tree.
+
+@example
+cp @var{SOURCE} @var{DEST}
+cp --version
+@end example
+
+@table @option
+@item --version
+Print version information.  Recognized only as the first argument.
+@end table
+
+If @var{SOURCE} is a directory, its contents are copied recursively,
+including subdirectories, regular files, and symbolic links.  Other entry
+types are skipped and a message is printed.  If @var{DEST} is an existing
+directory, the base name of @var{SOURCE} is appended to it.  Missing parent
+directories of the destination are created.  On success the program prints:
+
+@example
+Copied 'source' -> 'dest'
+@end example
+
+@noindent
+This message is written to standard error.
+
+@strong{Known limitations:} exactly two operands are accepted; there is no
+@option{-r}/@option{-R} option (recursion is automatic), no
+@option{-f}/@option{-i}/@option{-n} conflict policy, no @option{-p} attribute
+preservation, and no support for copying multiple sources into a directory.
+See @ref{Known Issues and Behavior Differences} regarding the output stream.
+
+@node dirname
+@section dirname
+@cindex dirname
+
+@command{dirname} prints the directory portion of each path name.
+
+@example
+dirname @var{NAME}...
+@end example
+
+@table @option
+@item --help
+Print a short help message and exit.
+@item --
+End option processing.
+@end table
+
+Trailing slashes are removed; a path consisting only of slashes yields
+@samp{/}; a path with no slash yields @samp{.}.
+
+@example
+$ dirname /usr/bin/zig
+@end example
+
+@noindent
+The intended output is @samp{/usr/bin}.  @strong{Current behavior:} the
+output does not appear because the standard output writer is not flushed; see
+@ref{Known Issues and Behavior Differences}.
+
+@strong{Known limitations:} no @option{-z}/@option{--zero} option; output is
+not flushed.
+
+@node ll
+@section ll
+@cindex ll
+
+@command{ll} is a compact directory lister.  It is inspired by a long
+directory listing but is not compatible with @command{ls}.
+
+@example
+ll [@var{OPTION}]... [@var{PATH}]
+@end example
+
+@table @option
+@item -a
+Include entries whose names begin with a dot.
+@item -h
+Show sizes in human-readable units (B, K, M, G, T, P).
+@item -l
+Accepted and ignored.
+@end table
+
+The directory is opened (the current directory by default) and entries are
+listed sorted by name.  A header line reports the number of entries:
+
+@example
+$ ll /usr/include
+total 12 entries
+d       4  Jan  3 09:14  .
+...
+@end example
+
+@noindent
+Each line shows a one-character file type, the size right-aligned in eight
+columns, a timestamp in @samp{Mon DD HH:MM} form, and the entry name.
+Symbolic links are followed by @samp{-> @var{target}}.  Output is written to
+standard error.
+
+@strong{Known limitations:} permissions, owner, group, and link counts are
+not shown; the @samp{total} value is a count of entries rather than a count of
+disk blocks; years and seconds are omitted from the timestamp; only the first
+non-option path is used; and @option{-l} has no effect.  See
+@ref{Known Issues and Behavior Differences} regarding the output stream.
+
+@node ln
+@section ln
+@cindex ln
+
+@command{ln} creates hard links or symbolic links.
+
+@example
+ln [@var{OPTION}]... @var{TARGET} [@var{LINK_NAME}]
+@end example
+
+@table @option
+@item -s, --symbolic
+Create a symbolic link instead of a hard link.
+@item -f, --force
+Remove an existing destination before creating the link.
+@item --help
+Print a short help message and exit.
+@item --
+End option processing.
+@end table
+
+If @var{LINK_NAME} is omitted, the base name of @var{TARGET} is used.  The
+target string is stored exactly as given.
+
+@example
+$ ln -s /usr/bin/zig latest-zig
+$ ln report.txt report-backup.txt
+@end example
+
+@strong{Exit status:} 0 on success; 1 if the link could not be created or if
+an option is invalid.
+
+@strong{Known limitations:} linking several targets into a directory is not
+implemented; giving more than two operands produces an error.  Long options
+such as @option{-v}, @option{-b}, and @option{-T} are not supported.
+
+@node mkdir
+@section mkdir
+@cindex mkdir
+
+@command{mkdir} creates directories.
+
+@example
+mkdir [@var{OPTION}]... @var{DIRECTORY}...
+@end example
+
+@table @option
+@item -m @var{MODE}
+Set the mode of the created directories.  @var{MODE} must be an octal number
+(for example, @samp{700} or @samp{0755}); symbolic modes are not accepted.
+@item -p
+Do not report an error if the directory already exists, and create missing
+parent directories as needed.
+@item -v
+Print a message for each directory created.
+@item --help
+Print a short help message and exit.
+@item --
+End option processing.
+@end table
+
+@example
+$ mkdir -p build/out
+$ mkdir -m 700 secrets
+$ mkdir -v logs
+mkdir: created directory 'logs'
+@end example
+
+@noindent
+Verbose messages are written to standard output.
+
+@strong{Exit status:} 0 on success; 1 if any directory could not be created
+or if an option is invalid.
+
+@strong{Known limitations:} @option{-m} accepts only octal modes; the long
+forms @option{--mode} and @option{--verbose} are not accepted; there is no
+@option{-Z} SELinux context option.
+
+@node mv
+@section mv
+@cindex mv
+
+@command{mv} moves or renames a file or directory.
+
+@example
+mv @var{SOURCE} @var{DEST}
+mv --version
+@end example
+
+@table @option
+@item --version
+Print version information.  Recognized only as the first argument.
+@end table
+
+The program first attempts an atomic rename.  If the source and destination
+are on different filesystems, it falls back to copying the source and then
+deleting it.  If @var{DEST} is an existing directory, the base name of
+@var{SOURCE} is appended to it.  Missing parent directories of the
+destination are created.  On success it prints:
+
+@example
+Moved 'source' -> 'dest'
+@end example
+
+@noindent
+This message is written to standard error.
+
+@strong{Known limitations:} exactly two operands are accepted; there is no
+@option{-f}/@option{-i}/@option{-n} conflict policy, no @option{-t}/@option{-T},
+and no @option{-v}.  The cross-device fallback skips special file types.  See
+@ref{Known Issues and Behavior Differences} regarding the output stream.
+
+@node pwd
+@section pwd
+@cindex pwd
+
+@command{pwd} prints the full path name of the current working directory.
+
+@example
+pwd
+@end example
+
+@table @option
+@item --help
+Print a short help message and exit.
+@end table
+
+The path is obtained from the operating system (a physical path).  Output is
+written to standard output.
+
+@strong{Exit status:} 0 on success; 1 if the current directory cannot be
+determined.
+
+@strong{Known limitations:} there is no @option{-L} versus @option{-P}
+distinction, and no @option{--version} option.
+
+@node rm
+@section rm
+@cindex rm
+
+@command{rm} removes files.
+
+@example
+rm @var{FILE}...
+@end example
+
+@table @option
+@item --help
+Print a short help message and exit.
+@item --version
+Print version information.
+@end table
+
+Each operand is removed with the operating system's file-deletion call.  On
+success the program prints:
+
+@example
+removed 'file'
+@end example
+
+@noindent
+Errors are printed for files that cannot be removed, and processing
+continues with the remaining operands.
+
+@strong{Exit status:} 0 if all files were removed; nonzero if any removal
+failed.
+
+@strong{Known limitations:} @command{rm} does not remove directories (an
+@code{IsDir} error is reported); there is no @option{-r}/@option{-R} recursive
+mode, no @option{-f}, @option{-i}, or @option{-d}, and no
+@option{--preserve-root}.  Removal notices and errors are written to standard
+error, and a failed removal also prints a Zig error trace.  See
+@ref{Known Issues and Behavior Differences}.
+
+@node rmdir
+@section rmdir
+@cindex rmdir
+
+@command{rmdir} removes empty directories.
+
+@example
+rmdir [@var{OPTION}]... @var{DIRECTORY}...
+@end example
+
+@table @option
+@item -p, --parents
+Also remove each parent directory that becomes empty.
+@item --help
+Print a short help message and exit.
+@item --version
+Print version information.
+@end table
+
+@strong{Exit status:} 0 on success; 1 if any directory could not be removed.
+
+@strong{Known limitations:} only empty directories can be removed.  The
+@option{-p} option is currently broken: it triggers a runtime panic
+(@code{@@memcpy arguments alias}).  The message printed when no directory is
+given contains a stray word, @samp{butuh}.  See
+@ref{Known Issues and Behavior Differences}.
+
+@node stat
+@section stat
+@cindex stat
+
+@command{stat} displays status information about a file.
+
+@example
+stat [@var{OPTION}]... @var{FILE}...
+@end example
+
+@table @option
+@item -L, --dereference
+Follow symbolic links.
+@item -c @var{FORMAT}, --format=@var{FORMAT}
+Print information according to @var{FORMAT} instead of the default listing.
+@end table
+
+Without a format, a multi-line listing is produced.  Timestamps are printed as
+raw Unix epoch seconds rather than as formatted dates:
+
+@example
+$ stat notes.txt
+  File: notes.txt
+  Size: 4	Blocks: 8	IO Block: 4096	regular file
+Device: 1dh/29d	Inode: 546	Links: 1
+Access: (664/-rw-rw-r--)	Uid: (1000)	Gid: (1000)
+Access: 1791645335
+Modify: 1791645335
+Change: 1791645335
+@end example
+
+The following format directives are supported:
+
+@table @code
+@item %n
+File name.
+@item %s
+Total size in bytes.
+@item %F
+File type (for example, @samp{regular file} or @samp{directory}).
+@item %a
+Access rights in octal.
+@item %A
+Access rights in human-readable form.
+@item %u
+Numeric user ID.
+@item %g
+Numeric group ID.
+@item %U
+User name of the owner.
+@item %G
+Group name of the owner.
+@item %%
+A literal percent sign.
+@end table
+
+@example
+$ stat -c '%n %s %a %F' notes.txt
+notes.txt 4 664 regular file
+@end example
+
+@strong{Exit status:} 0 on success; 1 if any file could not be examined.
+
+@strong{Known limitations:} there is no filesystem mode (@option{-f}), no
+terse mode (@option{-t}), and no @option{--printf}.  The @code{struct stat}
+layout used is specific to Linux x86_64, so the reported device and inode
+values are only meaningful on that platform.
+
+@node sync
+@section sync
+@cindex sync
+
+@command{sync} flushes pending filesystem buffers to disk.
+
+@example
+sync
+@end example
+
+The program calls the operating system's synchronization call and exits with
+status 0.  It accepts no options and prints nothing.
+
+@strong{Known limitations:} @option{--help}, @option{--version}, and data
+selection options are not supported.
+
+@node tee
+@section tee
+@cindex tee
+
+@command{tee} copies standard input to standard output and to one or more
+files.
+
+@example
+tee [@var{OPTION}]... [@var{FILE}]...
+@end example
+
+@table @option
+@item -a, --append
+Append to the named files instead of overwriting them.
+@item -i, --ignore-interrupts
+Accepted for compatibility but has no effect.
+@item --help
+Print a short help message and exit.
+@item --
+End option processing.
+@end table
+
+Data is read in blocks and written to standard output and to every named
+file.
+
+@example
+$ printf 'log line\n' | tee build.log
+log line
+@end example
+
+@strong{Exit status:} 0 on success; 1 if a file could not be opened or
+written.
+
+@strong{Known limitations:} @option{-i} does not actually change signal
+handling; the tool does not provide the @option{--output-error} family of
+options.
+
+@node touch
+@section touch
+@cindex touch
+
+@command{touch} changes file access and modification times and creates empty
+files if necessary.
+
+@example
+touch [@var{OPTION}]... @var{FILE}...
+@end example
+
+@table @option
+@item -a
+Change only the access time.
+@item -m
+Change only the modification time.
+@item -c, --no-create
+Do not create files that do not exist.
+@item --help
+Print a short help message and exit.
+@item --
+End option processing.
+@end table
+
+The program creates a missing file (unless @option{-c} is given) and then sets
+the requested times to the current time.
+
+@example
+$ touch new-empty-file
+$ touch -a access-only
+@end example
+
+@strong{Exit status:} 0 on success; 1 if any file could not be touched.
+
+@strong{Known limitations:} timestamps cannot be set to an explicit value;
+there is no @option{-d}, @option{-t}, @option{-r}, @option{--time}, or
+@option{--date}.  Specifying both @option{-a} and @option{-m} results in
+neither time being changed, because both are marked as omitted.
+
+@node truncate
+@section truncate
+@cindex truncate
+
+@command{truncate} shrinks or extends the size of a file.
+
+@example
+truncate [@var{OPTION}]... @var{FILE}...
+@end example
+
+@table @option
+@item -s @var{SIZE}, --size @var{SIZE}
+Set or adjust the file size.  A suffix of @samp{K}, @samp{M}, or @samp{G}
+multiplies the value by 1024, 1024@sup{2}, or 1024@sup{3} respectively.  The
+value must be non-negative.
+@item -c, --no-create
+Do not create files that do not exist.
+@item --help
+Print a short help message and exit.
+@item --
+End option processing.
+@end table
+
+@example
+$ truncate -s 1M disk-image.bin
+$ truncate -s0 empty.txt
+@end example
+
+@strong{Exit status:} 0 on success; 1 if the size is missing or invalid, if no
+file is given, or if any file could not be modified.
+
+@strong{Known limitations:} the form @option{--size=@var{SIZE}} (with an
+equals sign) is @strong{not} accepted; use @option{-s @var{SIZE}},
+@option{--size @var{SIZE}}, or @option{-s@var{SIZE}}.  When the target file
+does not exist, the file is created but left at size 0; the requested size is
+not applied.  Relative sizes (with a leading @samp{+}, @samp{-}, or @samp{%})
+and @option{--reference} are not supported.  See
+@ref{Known Issues and Behavior Differences}.
+
+@c ---------------------------------------------------------------------
+@node Text Processing Utilities
+@chapter Text Processing Utilities
+
+These utilities read text and produce transformed text output.
+
+@menu
+* base64::
+* cksum::
+* cmp::
+* cut::
+* head::
+* lsort::
+* printf::
+* seq::
+* tail::
+* uniq::
+* wc::
+@end menu
+
+@node base64
+@section base64
+@cindex base64
+
+@command{base64} encodes or decodes data in the standard Base64 alphabet.
+
+@example
+base64 [@var{OPTION}]... [@var{FILE}]
+@end example
+
+@table @option
+@item -d, --decode
+Decode data instead of encoding it.
+@item -w @var{COLS}, --wrap @var{COLS}
+Wrap encoded output after @var{COLS} characters.  The default is 76; use 0 to
+disable wrapping.
+@item --help
+Print a short help message and exit.
+@item --
+End option processing.
+@end table
+
+If no file is given, standard input is read.  Multiple input files are
+concatenated.  Decoding ignores spaces, tabs, and line breaks.
+
+@example
+$ printf 'hello' | base64
+aGVsbG8=
+$ printf 'aGVsbG8=' | base64 -d
+hello
+@end example
+
+@strong{Known limitations:} the form @option{--wrap=@var{COLS}} (with an
+equals sign) is not accepted; use @option{-w @var{COLS}} or
+@option{-w@var{COLS}}.  Reading to-be-decoded data from standard input with
+@option{base64 -d} and no file operand fails, because the option is mistaken
+for a file name; pass an explicit file or use @code{base64 -d /dev/stdin}.
+Invalid encoded input produces an uncaught error.  See
+@ref{Known Issues and Behavior Differences}.
+
+@node cksum
+@section cksum
+@cindex cksum
+
+@command{cksum} computes a message digest or checksum of a file, or prints its
+Base64 encoding.
+
+@example
+cksum --mode @var{ALGORITHM} @var{FILE}
+@end example
+
+@table @option
+@item --mode @var{ALGORITHM}
+Select the algorithm.  Required.
+@item -h, --help
+Print a short help message and exit.
+@item --version
+Print version information.  Recognized only as the first argument.
+@end table
+
+The following algorithms are available:
+
+@table @code
+@item md5
+MD5 (128-bit).
+@item sha1
+SHA-1 (160-bit).
+@item sha256
+SHA-256 (256-bit).
+@item sha512
+SHA-512 (512-bit).
+@item sha3
+SHA3-256 (256-bit).
+@item blake2
+BLAKE2b-512 (512-bit).
+@item crc32
+CRC-32 (32-bit).
+@item base64
+Base64 encoding (not a checksum).
+@end table
+
+Hash and CRC results are printed as a hexadecimal digest, two spaces, and the
+file name.  The @code{base64} mode prints only the encoded data.
+
+@example
+$ cksum --mode sha256 notes.txt
+09834d488008f5f1ef589a2d7cedc52425bee9dd23b2212e4c1d673c5cbb54e4  notes.txt
+$ cksum --mode crc32 notes.txt
+9c70f918  notes.txt
+@end example
+
+@noindent
+All output is written to standard error.
+
+@strong{Known limitations:} this is not the interface of the traditional
+@command{cksum} utility; @option{--mode} is mandatory, and @option{--version}
+is recognized only as the first argument.  Input is limited to 64 MiB.  There
+is no standard-input mode.  See @ref{Known Issues and Behavior Differences}
+regarding the output stream.
+
+@node cmp
+@section cmp
+@cindex cmp
+
+@command{cmp} compares two files byte by byte.
+
+@example
+cmp [@var{OPTION}]... @var{FILE1} [@var{FILE2}]
+@end example
+
+@table @option
+@item -s, --silent, --quiet
+Suppress all normal output and report only the exit status.
+@item --help
+Print a short help message and exit.
+@item --
+End option processing.
+@end table
+
+If @var{FILE2} is omitted or is @samp{-}, standard input is used.  The first
+difference is reported with its byte offset and line number; if the files
+differ in length, the shorter file is reported.
+
+@example
+$ cmp a.txt b.txt
+a.txt b.txt differ: byte 1, line 1
+@end example
+
+@strong{Exit status:} 0 if the files are identical; 1 if they differ; 2 on
+trouble (a missing file, an invalid option, or a missing operand).
+
+@strong{Known limitations:} only the first difference is reported; there is no
+@option{-l}, @option{-b}, @option{-i}, or @option{-n} option.
+
+@node cut
+@section cut
+@cindex cut
+
+@command{cut} prints selected bytes, characters, or fields from each line of
+its input.
+
+@example
+cut @var{OPTION}... [@var{FILE}]...
+@end example
+
+@table @option
+@item -b @var{LIST}
+Select the bytes in @var{LIST}.
+@item -c @var{LIST}
+Select the characters in @var{LIST}.
+@item -f @var{LIST}
+Select the fields in @var{LIST}.
+@item -d @var{DELIM}
+Use the single-byte @var{DELIM} instead of TAB as the field delimiter.
+@item -s
+Do not print lines that do not contain the delimiter.
+@item --help
+Print a short help message and exit.
+@item --
+End option processing.
+@end table
+
+@var{LIST} is a comma-separated list of ranges.  Each range is one of
+@var{N} (a single position), @var{N}- (from @var{N} to the end), -@var{M}
+(from the beginning to @var{M}), or @var{N}-@var{M}.  If no file operand is
+given, standard input is read.
+
+@example
+$ printf 'one:two:three\n' | cut -d: -f2
+two
+$ printf 'abcdef\n' | cut -c2-4
+bcd
+@end example
+
+@strong{Known limitations:} @option{-c} is byte-oriented and does not handle
+multibyte characters; there is no @option{--complement},
+@option{--output-delimiter}, or @option{-z}; and option ordering matters when
+@option{-s} follows a list option, in which case @option{-s} may be mistaken
+for a file name.  See @ref{Known Issues and Behavior Differences}.
+
+@node head
+@section head
+@cindex head
+
+@command{head} prints the first lines of each file.
+
+@example
+head [@var{OPTION}]... @var{FILE}...
+@end example
+
+@table @option
+@item -n @var{N}, --lines @var{N}
+Print the first @var{N} lines.  The default is 10.  The form -@var{N} is also
+accepted.
+@item -h, --help
+Print a short help message and exit.
+@item --version
+Print version information.  Recognized only as the first argument.
+@end table
+
+When more than one file is given, each file's output is preceded by a header
+of the form @samp{==> @var{FILE} <==}, with a blank line between files.
+
+@example
+$ head -n 2 notes.txt
+hello
+world
+@end example
+
+@noindent
+The lines are written to standard error in this release.
+
+@strong{Known limitations:} each file is read entirely into memory (with a
+64 MiB limit); output is written to standard error; the program exits with
+status 0 even if a file is missing or cannot be read; and there is no
+@option{-c}, @option{-q}, or @option{-v}.  See
+@ref{Known Issues and Behavior Differences}.
+
+@node lsort
+@section lsort
+@cindex lsort
+
+@command{lsort} sorts the lines of a file in byte order and prints them.
+
+@example
+lsort @var{FILE}
+lsort --version
+@end example
+
+@table @option
+@item --version
+Print version information.  Recognized only as the first argument.
+@end table
+
+The comparison is a plain byte comparison of whole lines, not a locale-aware
+or field-aware comparison.
+
+@example
+$ lsort unsorted.txt
+a
+b
+c
+@end example
+
+@noindent
+Output is written to standard output.
+
+@strong{Known limitations:} only one file is accepted and there is no
+standard-input mode; there are no numeric, reverse, unique, or key options;
+the tool is not the traditional @command{sort} utility and does not aim for
+compatibility with it.
+
+@node printf
+@section printf
+@cindex printf
+
+@command{printf} formats and prints its arguments.
+
+@example
+printf @var{FORMAT} [@var{ARGUMENT}]...
+@end example
+
+@table @option
+@item --help
+Print a short help message and exit.
+@end table
+
+The following conversions are supported:
+
+@table @code
+@item %s
+A string.
+@item %d
+A signed decimal integer.
+@item %i
+A signed decimal integer (synonym for @code{%d}).
+@item %u
+An unsigned decimal integer.
+@item %x
+A lowercase hexadecimal integer.
+@item %X
+An uppercase hexadecimal integer.
+@item %o
+An octal integer.
+@item %c
+The first character of a string.
+@item %b
+A string in which backslash escapes are interpreted.
+@item %%
+A literal percent sign.
+@end table
+
+The escape sequences @code{\n}, @code{\t}, @code{\r}, @code{\\}, and
+@code{\0@var{NNN}} (up to three octal digits) are recognized in @var{FORMAT}.
+The format is reused until all arguments have been consumed; a missing
+argument is treated as an empty string or as 0.
+
+@example
+$ printf '%s=%d\n' answer 42
+answer=42
+@end example
+
+@strong{Known limitations:} there is no field-width, precision, or flag
+support; there is no @code{%f}, @code{%e}, or @code{%g}; there is no @samp{*}
+width argument; and an unknown conversion is printed literally.
+
+@node seq
+@section seq
+@cindex seq
+
+@command{seq} prints a sequence of numbers.
+
+@example
+seq [@var{OPTION}]... @var{LAST}
+seq [@var{OPTION}]... @var{FIRST} @var{LAST}
+seq [@var{OPTION}]... @var{FIRST} @var{INCREMENT} @var{LAST}
+@end example
+
+@table @option
+@item -s @var{STRING}, --separator @var{STRING}
+Use @var{STRING} to separate numbers.  The default is a newline.
+@item -w, --equal-width
+Accepted for compatibility but @strong{not implemented}.
+@item --help
+Print a short help message and exit.
+@item --
+End option processing.
+@end table
+
+The operands may be floating-point numbers.  A zero increment is rejected.
+After the last number, a newline is always written.
+
+@example
+$ seq 1 5
+@end example
+
+@noindent
+The intended output is the numbers 1 through 5, each on its own line.
+@strong{Current behavior:} the output does not appear when it fits within the
+internal 4 KiB buffer, because standard output is never flushed.  Larger
+sequences are emitted only in part.  See
+@ref{Known Issues and Behavior Differences}.
+
+@strong{Known limitations:} @option{-w} is ignored; @option{--separator=}
+(with an equals sign) is not accepted; there is no format string; the output
+is not flushed.
+
+@node tail
+@section tail
+@cindex tail
+
+@command{tail} prints the last lines of each file.
+
+@example
+tail [@var{OPTION}]... @var{FILE}...
+@end example
+
+@table @option
+@item -n @var{N}, --lines @var{N}
+Print the last @var{N} lines.  The default is 10.  The form -@var{N} is also
+accepted.
+@item -h, --help
+Print a short help message and exit.
+@item --version
+Print version information.  Recognized only as the first argument.
+@end table
+
+When more than one file is given, each file's output is preceded by a header
+of the form @samp{==> @var{FILE} <==}, with a blank line between files.
+
+@example
+$ tail -n 2 notes.txt
+hello
+world
+@end example
+
+@noindent
+The lines are written to standard error in this release.
+
+@strong{Known limitations:} there is no follow mode (@option{-f}); each file
+is read entirely into memory (with a 64 MiB limit); output is written to
+standard error; the program exits with status 0 even if a file is missing; and
+there is no @option{-c}, @option{-q}, or @option{-v}.  See
+@ref{Known Issues and Behavior Differences}.
+
+@node uniq
+@section uniq
+@cindex uniq
+
+@command{uniq} filters adjacent duplicate lines.
+
+@example
+uniq [@var{OPTION}]... [@var{INPUT} [@var{OUTPUT}]]
+@end example
+
+@table @option
+@item -c, --count
+Prefix each output line with its number of occurrences.
+@item -d, --repeated
+Print only lines that occur more than once.
+@item -u, --unique
+Print only lines that occur exactly once.
+@item --help
+Print a short help message and exit.
+@item --
+End option processing.
+@end table
+
+Only adjacent duplicate lines are considered equal, so the input is normally
+sorted first.  With counts, the format is a right-aligned count in seven
+columns, a space, and the line.
+
+@strong{Known limitations:} the @var{OUTPUT} operand is accepted but ignored
+(output always goes to standard output).  Standard output is never flushed, so
+in practice most output does not appear.  Invoking the tool with options but
+no file operand (for example, @command{uniq -c}) fails because the option is
+mistaken for a file name.  Only adjacent duplicates are detected.  See
+@ref{Known Issues and Behavior Differences}.
+
+@node wc
+@section wc
+@cindex wc
+
+@command{wc} counts the lines, words, and characters in a file.
+
+@example
+wc @var{FILE}
+@end example
+
+@table @option
+@item --version
+Print version information.  Recognized only as the first argument.
+@end table
+
+The output has the form:
+
+@example
+$ wc notes.txt
+Lines: 2, Words: 3, Characters: 14
+@end example
+
+@noindent
+This output is written to standard error.
+
+Words are separated by spaces, tabs, or carriage returns.  The character
+count is computed by adding one newline byte to each line, so a final line
+that lacks a trailing newline is counted one byte too high.  Lines are
+counted as delimiter-separated segments, so a final unterminated line is
+counted as a line.
+
+@strong{Known limitations:} no option flags such as @option{-l},
+@option{-w}, @option{-c}, @option{-m}, or @option{-L}; only a single file is
+accepted and there is no standard-input mode; the counts differ from the
+traditional @command{wc}; and the @option{--version} banner is mislabeled
+(it prints the name @samp{Echo}).  See
+@ref{Known Issues and Behavior Differences}.
+
+@c ---------------------------------------------------------------------
+@node Shell and Environment Utilities
+@chapter Shell and Environment Utilities
+
+These utilities deal with command output, the process environment, and short
+system queries.
+
+@menu
+* date::
+* echo::
+* env::
+* false::
+* logname::
+* nproc::
+* printenv::
+* sleep::
+* test::
+* true::
+* whoami::
+* yes::
+@end menu
+
+@node date
+@section date
+@cindex date
+
+@command{date} displays the current date and time.
+
+@example
+date [@var{OPTION}]... [+@var{FORMAT}]
+@end example
+
+@table @option
+@item -u, --utc, --universal
+Print Coordinated Universal Time instead of local time.
+@item -R, --rfc-email
+Print the date in RFC 5322 (@samp{RFC email}) format.
+@item --help
+Print a short help message and exit.
+@end table
+
+@var{FORMAT} is a @code{strftime} format string and must begin with a plus
+sign.  Without a format, the default is
+@samp{%a %b %e %H:%M:%S %Z %Y} for local time, or the UTC equivalent when
+@option{-u} is given.
+
+@example
+$ date
+Sat Oct 10 22:17:55 +07 2026
+$ date -u
+Sat Oct 10 15:17:55 UTC 2026
+$ date -R
+Sat, 10 Oct 2026 22:17:55 +0700
+@end example
+
+@noindent
+Output is written to standard output.
+
+@strong{Known limitations:} @command{date} can only display the time; it
+cannot set the clock.  There is no @option{-d}, @option{-f}, @option{-r},
+@option{--date}, or @option{--iso-8601}, and no @option{--version}.  A format
+string is truncated to 255 bytes.
+
+@node echo
+@section echo
+@cindex echo
+
+@command{echo} prints its arguments separated by single spaces and followed
+by a newline.
+
+@example
+echo @var{WORD}...
+@end example
+
+@table @option
+@item --version
+Print version information.  Recognized only as the first argument.
+@end table
+
+@example
+$ echo Hello, world
+Hello, world
+@end example
+
+@noindent
+Output is written to standard output.
+
+@strong{Known limitations:} there is no @option{-n} (no trailing newline), no
+@option{-e}/@option{-E} (backslash escapes are never interpreted), and no
+@option{--help}.  A bare @samp{--help} is printed as an ordinary word.  With
+no arguments, a short usage message is written to standard error.
+
+@node env
+@section env
+@cindex env
+
+@command{env} sets environment variables and then runs a command, or prints
+the resulting environment.
+
+@example
+env [@var{OPTION}]... [@var{NAME}=@var{VALUE}]... [@var{COMMAND} [@var{ARG}]...]
+@end example
+
+@table @option
+@item -i, --ignore-environment
+Start with an empty environment.
+@item -u @var{NAME}, --unset @var{NAME}
+Remove @var{NAME} from the environment.  The form @option{-u@var{NAME}} is
+also accepted.
+@item --help
+Print a short help message and exit.
+@item --
+End option processing; everything after it is the command and its arguments.
+@end table
+
+@example
+$ env -i FOO=bar
+FOO=bar
+$ env -u HOME printenv HOME
+@end example
+
+@strong{Exit status:} 0 if the environment was printed or the command ran; 127
+if the command could not be found.
+
+@strong{Known limitations:} the documented @samp{-} operand (clear the
+environment) is not implemented and is treated as a command name.  The form
+@option{--unset=@var{NAME}} is not accepted; it is interpreted as a
+@var{NAME}=@var{VALUE} assignment.  Any argument containing an equals sign is
+treated as an assignment.  There is no @option{-S}, @option{-C}, or
+@option{-0}.  See @ref{Known Issues and Behavior Differences}.
+
+@node false
+@section false
+@cindex false
+
+@command{false} does nothing and returns a failure status.
+
+@example
+false
+@end example
+
+The program always exits with status 1.  It ignores all arguments and
+supports no options.
+
+@node logname
+@section logname
+@cindex logname
+
+@command{logname} prints the user's login name.
+
+@example
+logname
+@end example
+
+@table @option
+@item --help
+Print a short help message and exit.
+@end table
+
+The name is obtained from the login name of the controlling terminal.  Output
+is written to standard output.
+
+@strong{Exit status:} 0 on success; 1 if no login name is available.
+
+@strong{Known limitations:} no @option{--version} option.
+
+@node nproc
+@section nproc
+@cindex nproc
+
+@command{nproc} prints the number of processing units available to the
+current process.
+
+@example
+nproc
+@end example
+
+@table @option
+@item --help
+Print a short help message and exit.
+@end table
+
+If the count cannot be determined, a value of 1 is printed.  Output is written
+to standard output.
+
+@strong{Known limitations:} there is no @option{--all} or @option{--ignore},
+and no @option{--version} option.
+
+@node printenv
+@section printenv
+@cindex printenv
+
+@command{printenv} prints environment variables.
+
+@example
+printenv [@var{VARIABLE}]...
+@end example
+
+@table @option
+@item --help
+Print a short help message and exit.
+@end table
+
+With no operand, the entire environment is printed as @var{NAME}=@var{VALUE}
+lines.  With operands, the value of each named variable is printed.  Output is
+written to standard output.
+
+@strong{Exit status:} 0 on success; 1 if any named variable is not set.
+
+@strong{Known limitations:} standard output is buffered and never flushed, so
+in the current release the program produces no output.  In the
+no-argument listing, the order of variables is unspecified.  There is no
+@option{-0}/@option{--null} option.  See
+@ref{Known Issues and Behavior Differences}.
+
+@node sleep
+@section sleep
+@cindex sleep
+
+@command{sleep} pauses for a specified duration.
+
+@example
+sleep @var{NUMBER}...
+@end example
+
+@table @option
+@item --help
+Print a short help message and exit.
+@end table
+
+Each operand is parsed as a floating-point number of seconds; the operands are
+summed and the process sleeps for the total.
+
+@example
+$ sleep 0.5
+$ sleep 1 2
+@end example
+
+@strong{Exit status:} 0 on success; 1 if an operand is missing or invalid.
+
+@strong{Known limitations:} the built-in help text mentions the suffixes
+@samp{s}, @samp{m}, @samp{h}, and @samp{d}, but suffixes are @strong{not}
+implemented.  A value such as @samp{1s} is rejected as an invalid time
+interval.
+
+@node test
+@section test
+@cindex test
+@cindex [ (test)
+
+@command{test} evaluates a conditional expression and reports the result
+through its exit status.  It is also available in bracket form.
+
+@example
+test @var{EXPRESSION}
+[ @var{EXPRESSION} ]
+@end example
+
+@table @option
+@item --help
+Print a short help message and exit.  Recognized only when it is the whole
+expression.
+@end table
+
+The following primary operators are supported.
+
+File tests:
+
+@table @code
+@item -e @var{FILE}
+@var{FILE} exists.
+@item -f @var{FILE}
+@var{FILE} is a regular file.
+@item -d @var{FILE}
+@var{FILE} is a directory.
+@item -b @var{FILE}
+@var{FILE} is a block device.
+@item -c @var{FILE}
+@var{FILE} is a character device.
+@item -p @var{FILE}
+@var{FILE} is a named pipe.
+@item -S @var{FILE}
+@var{FILE} is a socket.
+@item -s @var{FILE}
+@var{FILE} has a size greater than zero.
+@item -r @var{FILE}
+@var{FILE} is readable.
+@item -w @var{FILE}
+@var{FILE} is writable.
+@item -x @var{FILE}
+@var{FILE} is executable.
+@item -L @var{FILE}
+@var{FILE} is a symbolic link.  @option{-h} is a synonym.
+@end table
+
+String and integer tests:
+
+@table @code
+@item -z @var{STRING}
+The length of @var{STRING} is zero.
+@item -n @var{STRING}
+The length of @var{STRING} is nonzero.
+@item @var{STR1} = @var{STR2}
+@itemx @var{STR1} == @var{STR2}
+The strings are equal.
+@item @var{STR1} != @var{STR2}
+The strings are not equal.
+@item @var{N1} -eq @var{N2}
+@itemx @var{N1} -ne @var{N2}
+@itemx @var{N1} -lt @var{N2}
+@itemx @var{N1} -le @var{N2}
+@itemx @var{N1} -gt @var{N2}
+@itemx @var{N1} -ge @var{N2}
+Integer comparisons.
+@end table
+
+The logical operators @samp{!}, @option{-a} (and), and @option{-o} (or) are
+also supported.  @option{-a} binds more tightly than @option{-o}.  With a
+single argument, a non-empty string is true and an empty string is false.
+The readable, writable, and executable tests use the process's effective
+user and group identifiers.
+
+@example
+$ test -f /etc/hostname
+$ echo $?
+0
+$ test 5 -gt 3
+$ echo $?
+0
+@end example
+
+@strong{Exit status:} 0 if the expression is true; 1 if it is false; 2 on a
+syntax error, a missing operand, or extra arguments.
+
+@strong{Known limitations:} the bracket form requires the program to be
+invoked with the name @samp{[}, for example through a symbolic link named
+@samp{[} that is found on @env{PATH}; the closing @samp{]} is required.
+There is no parenthesis grouping and no @option{-t} terminal test.  The
+@option{--help} option is recognized only when it is the sole expression.
+
+@node true
+@section true
+@cindex true
+
+@command{true} does nothing and returns a success status.
+
+@example
+true
+@end example
+
+The program always exits with status 0.  It ignores all arguments and
+supports no options.
+
+@node whoami
+@section whoami
+@cindex whoami
+
+@command{whoami} prints the user name associated with the current effective
+user ID.
+
+@example
+whoami
+@end example
+
+@table @option
+@item --help
+Print a short help message and exit.
+@end table
+
+Output is written to standard output.
+
+@strong{Exit status:} 0 on success; 1 if the name cannot be determined.
+
+@strong{Known limitations:} no @option{--version} option.
+
+@node yes
+@section yes
+@cindex yes
+
+@command{yes} repeatedly outputs a line.
+
+@example
+yes [@var{STRING}]...
+@end example
+
+@table @option
+@item --help
+Print a short help message and exit.
+@end table
+
+With no operand, the line @samp{y} is repeated.  With operands, the strings
+are joined with single spaces and that line is repeated.  The line is limited
+to 4096 bytes.  Output continues until writing fails, for example when the
+receiving end of a pipe is closed; the program then returns status 0.
+
+@example
+$ yes | head -n 3
+y
+y
+y
+@end example
+
+@strong{Known limitations:} no @option{--version} option; very long argument
+lists are truncated to the 4096-byte line buffer.
+
+@c ---------------------------------------------------------------------
+@node Development and Contributing
+@chapter Development and Contributing
+
+@menu
+* Source Layout::
+* Coding Conventions::
+* Adding a Utility::
+* Testing::
+@end menu
+
+@node Source Layout
+@section Source Layout
+
+Each utility is implemented in its own Zig source file at the top level of the
+project, named after the utility (for example, @file{echo.zig} and
+@file{stat.zig}).  The build is described by a single @file{build.zig}.  There
+is no @file{build.zig.zon} manifest and there are no third-party packages.
+
+Most source files begin with a copyright and SPDX license header:
+
+@example
+// Copyright (c) 2026 HiMitsu <himitsutha@@protonmail.com>
+// SPDX-License-Identifier: MIT
+@end example
+
+A few files in the current release (@file{base64.zig}, @file{date.zig},
+@file{env.zig}, @file{stat.zig}, and @file{test.zig}) do not yet carry this
+header.
+
+@node Coding Conventions
+@section Coding Conventions
+
+@itemize @bullet
+@item
+Write clear, self-contained code: each utility has a single @code{main}
+function and does not depend on other utilities in the project.
+@item
+Parse options explicitly and reject unsupported options with a clear message
+rather than ignoring them.
+@item
+Prefer the Zig standard library for portable operations.  Use libc functions
+only when the standard library does not provide the required behavior.
+@item
+Keep help text accurate.  Several utilities in the current release still carry
+help text that describes behavior that is not implemented; for example,
+@command{sleep} mentions time suffixes it does not accept, and
+@command{seq} lists @option{-w} even though it is ignored.  Correcting such
+text is a useful contribution.
+@item
+When you change a utility's behavior, update its section in
+@file{docs/coreutils.texi} at the same time.
+@end itemize
+
+@node Adding a Utility
+@section Adding a Utility
+
+To add a new utility:
+
+@enumerate
+@item
+Create a new file @file{@var{name}.zig} with a @code{main} function.
+@item
+Add the name to the @code{utils} array in @file{build.zig}.  The array is a
+list of string literals; each entry is compiled from @file{@var{name}.zig}.
+@item
+Add a section to the appropriate chapter of this manual and an entry to the
+overview table in @ref{Utilities Overview}.
+@end enumerate
+
+Do not rename or remove existing utilities without also updating
+@file{build.zig} and this manual.
+
+@node Testing
+@section Testing
+
+The repository does not currently contain an automated test suite, and
+@file{build.zig} does not define a @code{test} step.  Contributions that add
+tests are welcome.
+
+To verify that the project builds, run:
+
+@example
+zig build
+@end example
+
+To check this manual for Texinfo errors, run:
+
+@example
+makeinfo --no-split -o /dev/null docs/coreutils.texi
+@end example
+
+@c ---------------------------------------------------------------------
+@node License
+@chapter License
+
+@cindex license
+@cindex MIT License
+
+CoreUtils is free software distributed under the @strong{MIT License}.
+
+@example
+MIT License
+
+Copyright (c) 2026 HiMitsu <himitsutha@@protonmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+@end example
+
+The authoritative license text is the @file{LICENSE} file in the project
+root.  The complete text above matches that file.
+
+@strong{About version banners.}  Several utilities print a version banner
+that reads @samp{Copyright (c) 2026 Mitsu. All Rights Reserved.}  That wording
+conflicts with the MIT License, which grants broad reuse rights.  The MIT
+License in @file{LICENSE} is the governing license for the project; the
+banner text is a known inconsistency and does not restrict the rights granted
+by the license.
+
+The project contains no bundled third-party code.  It links against the Zig
+standard library, which is distributed under the MIT License, and against the
+platform C library.
+
+@c ---------------------------------------------------------------------
+@node Known Issues and Behavior Differences
+@chapter Known Issues and Behavior Differences
+
+@cindex known issues
+@cindex behavior differences
+
+This chapter lists behavior that is verified in the current release and that
+differs from what the utility names and help text might lead you to expect.
+The list is based on the source code and on running the built executables.
+These issues are documented rather than hidden; fixing them is a welcome
+contribution.
+
+@enumerate
+@item
+@strong{Normal output sent to standard error.}  The following utilities write
+their ordinary output with the Zig debugging print routine, which targets
+standard error, so their output does not appear on standard output:
+@command{catty}, @command{cksum}, @command{cp}, @command{head}, @command{ll},
+@command{mv}, @command{rm}, @command{rmdir}, @command{tail}, and
+@command{wc}.
+
+@item
+@strong{Buffered standard output never flushed.}  The following utilities
+create a buffered standard output writer and never flush it, so output that
+fits within the internal 4 KiB buffer is discarded and larger output may lose
+its tail: @command{basename}, @command{dirname}, @command{printenv},
+@command{seq}, and @command{uniq}.
+
+@item
+@strong{Option tokens mistaken for file names when no file operand is given.}
+Several tools leave their internal file-operand index at the first argument
+when only options are present, so the option itself is opened as a file.  This
+affects @command{base64 -d} reading from standard input, @command{uniq} with
+any option reading from standard input, and some orderings of @command{cut}
+options.  Passing an explicit file operand works around it.
+
+@item
+@strong{@command{truncate} creates zero-length files.}  When the target file
+does not exist and file creation is allowed, the file is created but the
+requested size is not applied, so the new file is left empty.
+
+@item
+@strong{@command{rmdir -p} crashes.}  The @option{-p} implementation copies
+overlapping memory and triggers a runtime panic
+(@code{@@memcpy arguments alias}).
+
+@item
+@strong{@command{rmdir} error message contains a stray word.}  When no
+directory is given, the message contains the untranslated word @samp{butuh}.
+
+@item
+@strong{@command{seq -w} is ignored.}  The @option{--equal-width} option is
+accepted but has no effect, and the output is also subject to the flushing
+issue.
+
+@item
+@strong{@command{chmod -R} is not implemented.}  The option is accepted by the
+parser but reported as unimplemented, with exit status 1.
+
+@item
+@strong{@command{ln} cannot link multiple targets.}  More than two operands
+produce an error.
+
+@item
+@strong{@command{sleep} suffixes are advertised but unsupported.}  The help
+text lists @samp{s}, @samp{m}, @samp{h}, and @samp{d} suffixes, but values
+such as @samp{1s} are rejected.
+
+@item
+@strong{Long options with an equals sign are not always accepted.}
+@option{--size=}, @option{--wrap=}, @option{--unset=}, and
+@option{--separator=} are not recognized in some utilities even though the
+help text shows them.  Use the space-separated or joined short form instead.
+
+@item
+@strong{Unhandled errors print Zig error traces.}  A failed removal in
+@command{rm}, a hash error in @command{cksum}, or invalid Base64 input in
+@command{base64} can produce a Zig error message and stack trace rather than a
+quiet diagnostic.
+
+@item
+@strong{@command{wc} mislabels its version banner.}  The @option{--version}
+output prints the name @samp{Echo}.
+
+@item
+@strong{Version banners claim all rights reserved.}  See the note in
+@ref{License}; the MIT License governs the project.
+@end enumerate
+
+@c ---------------------------------------------------------------------
+@node Index
+@unnumbered Index
+
+@printindex cp
+
+@bye
