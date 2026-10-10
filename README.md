@@ -4,10 +4,10 @@
   <img src="gnusucks.webp" width="500">
 </p>
 
-This directory contains the documentation for **CoreUtils**, an independent
+This directory contains the documentation for **Mitsu CoreUtils**, an independent
 collection of Unix-like command-line utilities written in Zig 0.17.0.
 
-> CoreUtils is **not** GNU Coreutils and is not affiliated with, endorsed by,
+> Mitsu CoreUtils is **not** GNU Coreutils and is not affiliated with, endorsed by,
 > or part of the GNU Project. See the manual's introduction for details.
 
 ## Before you contribute
@@ -32,7 +32,7 @@ agreement with that file.
 ## Layout
 
 ```
-CoreUtils/
+MitsuCoreUtils/
 ├── docs/
 │   ├── coreutils.texi   # main manual (Texinfo source)
 │   └── README.md        # this guide
@@ -74,7 +74,7 @@ tested with `texi2any` / `makeinfo` from GNU Texinfo 7.3.
 - `install-info` is optional and only needed if you want to register the Info
   file with a system Info directory.
 
-Only the build tools are required; the CoreUtils utilities themselves build
+Only the build tools are required; the Mitsu CoreUtils utilities themselves build
 with Zig alone (see the manual's "Building and Installing" chapter).
 
 ## Generating documentation
