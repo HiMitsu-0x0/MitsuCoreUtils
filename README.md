@@ -1,4 +1,4 @@
-# CoreUtils Documentation
+# Mitsu CoreUtils Documentation
 
 <p align="center">
   <img src="gnusucks.webp" width="500">
