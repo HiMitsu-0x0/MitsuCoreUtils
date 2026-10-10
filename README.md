@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Mitsu CoreUtils Documentation
 
 This directory contains the documentation for Mitsu CoreUtils, an independent collection of Unix-like command-line utilities written in Zig 0.17.0.
@@ -131,3 +132,6 @@ Follow docs/AGENT.MD when contributing to the project as an AI coding assistant.
 Do not modify, reformat, or fix .zig source files when making documentation-only changes.
 Validate the Texinfo source after editing whenever GNU Texinfo is available.
 Clearly report unverified behavior, failed checks, and environmental limitations instead of claiming that validation succeeded.
+=======
+# MitsuCoreUtils
+>>>>>>> 4eb3f955e38118da32c0d0ad7dea194dc3c93dab

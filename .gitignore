@@ -1,2 +1,7 @@
 .zig-cache/
 zig-out/
+<<<<<<< HEAD
+=======
+zig-pkg/
+*.o
+>>>>>>> 4eb3f955e38118da32c0d0ad7dea194dc3c93dab
